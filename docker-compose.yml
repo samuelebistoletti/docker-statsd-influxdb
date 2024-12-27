@@ -4,12 +4,15 @@ volumes:
   influxdb_data: {}
   postgres_data: {}
   grafana_data: {}
+  mosquitto_data: {}
 
 networks:
   influx:
     name: influx-frontend
   postgres:
     external: false
+  mqtt:
+    name: mqtt-network
 
 services:
   influxdb:
@@ -38,6 +41,7 @@ services:
     profiles: ["telegraf"]
     networks:
       - influx
+      - mqtt
     ports:
       - 8125:8125/udp
     restart: always
@@ -85,3 +89,18 @@ services:
       - grafana_data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning
       - ./grafana/dashboards:/etc/dashboards
+
+  mosquitto:
+    container_name: dsig-mosquitto
+    image: eclipse-mosquitto:latest
+    networks:
+      - mqtt
+      - influx
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - mosquitto_data:/mosquitto/data
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/log:/mosquitto/log
+    restart: always
